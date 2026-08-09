@@ -195,6 +195,27 @@ function affixSources(affix) {
     .map(t => ({ type: t, levels: Array.from(byType[t]).sort() }));
 }
 
+// ---------- Row layout ----------
+
+// Split a row into a wrapping middle and a pinned end. Without this the whole
+// row wraps as one flow, so on a narrow panel the trailing controls (status
+// badge, remove button) drop onto a line of their own instead of the chips
+// simply flowing onto a second line. Call it last, once the row is built:
+// everything already appended becomes the wrapping middle, and the elements
+// passed here are moved out to the pinned end.
+function pinRowEnd(row, ...endEls) {
+  const main = document.createElement("div");
+  main.className = "row-main";
+  while (row.firstChild) main.appendChild(row.firstChild);
+  row.appendChild(main);
+
+  const end = document.createElement("div");
+  end.className = "row-end";
+  endEls.forEach(el => { if (el) end.appendChild(el); }); // reparents out of main
+  row.appendChild(end);
+  return row;
+}
+
 // ---------- Slots ----------
 
 function buildSlotRow(slot, socketIndex) {
@@ -278,7 +299,7 @@ function buildSlotRow(slot, socketIndex) {
   });
   row.appendChild(removeBtn);
 
-  return row;
+  return pinRowEnd(row, removeBtn);
 }
 
 function buildFixedAffixRow(fixed) {
@@ -321,7 +342,7 @@ function buildFixedAffixRow(fixed) {
   });
   row.appendChild(removeBtn);
 
-  return row;
+  return pinRowEnd(row, removeBtn);
 }
 
 function addFixedAffix(group) {
@@ -799,7 +820,7 @@ function renderGoals() {
     });
     row.appendChild(removeBtn);
 
-    list.appendChild(row);
+    list.appendChild(pinRowEnd(row, badge, removeBtn));
   });
 }
 

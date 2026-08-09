@@ -160,6 +160,8 @@ body {
 
 .rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
 
+/* A row is a wrapping middle plus a pinned end, so on a narrow panel the chips
+   flow onto a second line while the badge and remove button stay put. */
 .slot-row, .goal-row {
   display: flex;
   align-items: center;
@@ -168,7 +170,22 @@ body {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
   padding: 8px 10px;
+  flex-wrap: nowrap;
+}
+.row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   flex-wrap: wrap;
+  flex: 1 1 auto;
+  min-width: 0; /* let it shrink below its content width instead of overflowing */
+}
+.row-end {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 .slot-label, .goal-label { color: var(--text-dim); font-size: 0.85rem; min-width: 52px; }
 .goal-cap-hint { color: var(--text-dim); font-size: 0.78rem; font-style: italic; }
@@ -240,7 +257,6 @@ body {
 /* Live reachability flag on the goal row itself. */
 .goal-status-badge:empty { display: none; }
 .goal-status-badge {
-  margin-left: auto;
   font-size: 0.75rem;
   padding: 2px 7px;
   border-radius: 999px;
@@ -251,8 +267,6 @@ body {
 .goal-status-badge.warn { color: #fde68a; background: #2a2410; border: 1px solid #4a3f1a; }
 .goal-status-badge.bad { color: #fecaca; background: #3a1414; border: 1px solid #7a2c2c; }
 .goal-row-bad { border-color: #7a2c2c; }
-/* the badge takes the auto margin, so the remove button no longer needs it */
-.goal-row .goal-status-badge + .remove-btn { margin-left: 6px; }
 
 .type-chip {
   padding: 4px 10px;
@@ -282,15 +296,16 @@ body {
   max-width: 220px;
   width: max-content;
   text-align: center;
-  opacity: 0;
-  visibility: hidden;
   pointer-events: none;
   z-index: 100;
+  /* display:none rather than visibility:hidden -- a hidden absolutely
+     positioned box still counts toward the scroll area, which gave the page a
+     permanent horizontal scrollbar from tooltips reaching past the viewport. */
+  display: none;
 }
 [data-tooltip]:hover::after,
 [data-tooltip]:focus-visible::after {
-  opacity: 1;
-  visibility: visible;
+  display: block;
 }
 
 .gem-chip {
@@ -321,7 +336,6 @@ select, input[type="text"], input[type="number"] {
 input[type="number"] { width: 64px; }
 
 .remove-btn {
-  margin-left: auto;
   background: transparent;
   border: none;
   color: var(--text-dim);
