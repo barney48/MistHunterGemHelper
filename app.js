@@ -745,6 +745,7 @@ function renderGoals() {
     targetInput.addEventListener("input", () => {
       goal.target = targetInput.value === "" ? null : Math.max(0, parseInt(targetInput.value, 10) || 0);
       saveState();
+      renderGoalBudget(); // cheap, so show it straight away rather than after the solve debounce
       scheduleSolve();
     });
 
@@ -758,6 +759,7 @@ function renderGoals() {
       goal.target = next;
       targetInput.value = next;
       saveState();
+      renderGoalBudget();
       scheduleSolve();
     };
 
@@ -820,6 +822,12 @@ function scheduleSolve() {
 }
 
 function runSolve() {
+  // The budget is a pure view of slots + targets, and every mutation funnels
+  // through here -- refreshing it at this one point keeps it in step with
+  // edits that don't rebuild the goal rows, such as typing a target or
+  // clicking the steppers.
+  renderGoalBudget();
+
   const dedupedGoals = new Map();
   const capInfo = {};
   for (const g of state.goals) {
