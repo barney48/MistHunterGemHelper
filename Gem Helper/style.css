@@ -1,0 +1,381 @@
+:root {
+  color-scheme: dark;
+  --bg: #14161c;
+  --panel: #1c1f28;
+  --panel-border: #2c303c;
+  --text: #e6e8ef;
+  --text-dim: #9aa0b0;
+  --accent: #7c9cff;
+  --accent-dim: #3a4470;
+  --good: #4ade80;
+  --bad: #f87171;
+  --warn: #fbbf24;
+  --row-bg: #22252f;
+  --input-bg: #14161c;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.app-header {
+  padding: 24px 28px 16px;
+  border-bottom: 1px solid var(--panel-border);
+  position: relative;
+}
+
+.lang-toggle {
+  position: absolute;
+  top: 20px;
+  right: 28px;
+  display: flex;
+  gap: 6px;
+}
+.lang-btn {
+  padding: 5px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--panel-border);
+  background: var(--row-bg);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.lang-btn:hover { filter: brightness(1.15); }
+.lang-btn.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.app-header h1 { margin: 0 0 6px; font-size: 1.5rem; }
+.subtitle { margin: 0 0 8px; color: var(--text-dim); }
+.disclaimer {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--warn);
+  background: #2a2410;
+  border: 1px solid #4a3f1a;
+  padding: 8px 12px;
+  border-radius: 6px;
+  max-width: 900px;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-areas:
+    "slots goals"
+    "results results";
+  gap: 16px;
+  padding: 20px 28px;
+}
+#slots-panel { grid-area: slots; }
+#goals-panel { grid-area: goals; }
+#results-panel { grid-area: results; }
+
+@media (max-width: 900px) {
+  .layout { grid-template-columns: 1fr; grid-template-areas: "slots" "goals" "results"; }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+.panel h2 { margin: 0 0 4px; font-size: 1.1rem; }
+.hint { color: var(--text-dim); font-size: 0.85rem; margin: 4px 0 12px; }
+
+
+.view-toggle { display: flex; gap: 6px; margin-bottom: 10px; }
+.toggle-btn {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--panel-border);
+  background: var(--row-bg);
+  color: var(--text-dim);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.toggle-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+
+.bulk-rarity {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+  padding: 7px 10px;
+  background: var(--row-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+}
+.bulk-label { font-size: 0.83rem; color: var(--text-dim); font-weight: 600; }
+.bulk-rarity .rarity-select { flex: 1; min-width: 150px; }
+
+.slot-group { margin-bottom: 10px; }
+.slot-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 2px;
+}
+.slot-group-title { font-weight: 600; font-size: 0.9rem; }
+.slot-group-btns { display: flex; gap: 6px; align-items: center; }
+.rarity-select { font-size: 0.78rem; padding: 3px 6px; cursor: pointer; }
+
+/* Two-way switch on the one slot a rarity layout leaves open. */
+.swap-toggle { display: inline-flex; border: 1px solid var(--panel-border); border-radius: 6px; overflow: hidden; cursor: help; }
+.swap-btn {
+  border: none;
+  background: var(--input-bg);
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+.swap-btn.active { background: var(--accent-dim); color: var(--text); }
+.swap-btn:hover:not(.active) { filter: brightness(1.3); }
+
+/* Built-in gear affixes: not a socket, so visually set apart from slot rows. */
+.fixed-row {
+  border-style: dashed;
+  border-color: var(--accent-dim);
+  background: transparent;
+}
+.fixed-label { color: var(--accent); font-style: italic; cursor: help; }
+.btn-small { padding: 3px 10px; font-size: 0.78rem; }
+.slot-group-empty { margin: 4px 0 8px; font-size: 0.82rem; }
+.slot-group .rows, .slot-group .slot-row { margin-top: 6px; }
+
+.custom-group-form { display: flex; gap: 8px; margin-top: 4px; }
+.custom-group-form input { flex: 1; }
+
+.rows { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+
+.slot-row, .goal-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--row-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  flex-wrap: wrap;
+}
+.slot-label, .goal-label { color: var(--text-dim); font-size: 0.85rem; min-width: 52px; }
+.goal-cap-hint { color: var(--text-dim); font-size: 0.78rem; font-style: italic; }
+.slot-label:not(:first-child) { min-width: auto; margin-left: 4px; }
+
+.goal-field { display: inline-flex; align-items: center; gap: 5px; }
+.goal-field .goal-label { min-width: auto; }
+.goal-field input { width: 52px; text-align: center; }
+
+.step-btn {
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+  border-radius: 50%;
+  border: 1px solid var(--panel-border);
+  background: var(--input-bg);
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+.step-btn:hover { background: var(--accent-dim); border-color: var(--accent); }
+.step-btn:active { filter: brightness(0.9); }
+
+/* Priority reordering + rank number on a goal row. */
+.goal-order { display: inline-flex; flex-direction: column; gap: 1px; cursor: help; }
+.order-btn {
+  border: 1px solid var(--panel-border);
+  background: var(--input-bg);
+  color: var(--text-dim);
+  font-size: 0.5rem;
+  line-height: 1;
+  padding: 2px 5px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+.order-btn:hover:not(:disabled) { background: var(--accent-dim); border-color: var(--accent); color: var(--text); }
+.order-btn:disabled { opacity: 0.3; cursor: default; }
+.goal-rank {
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  min-width: 14px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.budget-note {
+  margin: 0 0 10px;
+  font-size: 0.83rem;
+  color: var(--text-dim);
+  padding: 6px 10px;
+  background: var(--row-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  cursor: help;
+}
+.budget-note strong { color: var(--text); }
+.budget-note.over { color: #fde68a; background: #2a2410; border-color: #4a3f1a; }
+.budget-note.over strong { color: #fde68a; }
+
+/* Which socket colours can supply the chosen affix. */
+.goal-sources { display: inline-flex; align-items: center; gap: 3px; cursor: help; color: var(--text-dim); }
+.goal-sources .gem-icon { width: 15px; height: 15px; }
+
+/* Live reachability flag on the goal row itself. */
+.goal-status-badge:empty { display: none; }
+.goal-status-badge {
+  margin-left: auto;
+  font-size: 0.75rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: help;
+}
+.goal-status-badge.ok   { color: var(--good); }
+.goal-status-badge.warn { color: #fde68a; background: #2a2410; border: 1px solid #4a3f1a; }
+.goal-status-badge.bad { color: #fecaca; background: #3a1414; border: 1px solid #7a2c2c; }
+.goal-row-bad { border-color: #7a2c2c; }
+/* the badge takes the auto margin, so the remove button no longer needs it */
+.goal-row .goal-status-badge + .remove-btn { margin-left: 6px; }
+
+.type-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  background: var(--input-bg);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  cursor: pointer;
+  user-select: none;
+}
+/* Instant tooltip -- native title/SVG-title tooltips have a browser hover
+   delay we can't shorten, so this shows on :hover with no transition. */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0a0b0e;
+  color: #fff;
+  border: 1px solid var(--panel-border);
+  padding: 3px 7px;
+  border-radius: 5px;
+  font-size: 0.72rem;
+  max-width: 220px;
+  width: max-content;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 100;
+}
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
+
+.gem-chip {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.gem-icon { width: 19px; height: 19px; overflow: visible; flex-shrink: 0; }
+.gem-icon-wrap { display: inline-flex; align-items: center; vertical-align: -4px; margin-right: 2px; cursor: default; }
+
+.type-chip.active {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+select, input[type="text"], input[type="number"] {
+  background: var(--input-bg);
+  color: var(--text);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+}
+input[type="number"] { width: 64px; }
+
+.remove-btn {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+}
+.remove-btn:hover { color: var(--bad); }
+
+.btn {
+  background: var(--accent-dim);
+  color: var(--text);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  padding: 7px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.btn:hover { filter: brightness(1.15); }
+.btn-secondary { background: var(--row-bg); border-color: var(--panel-border); }
+
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--panel-border); }
+th { color: var(--text-dim); font-weight: 600; }
+
+.status-met { color: var(--good); font-weight: 600; }
+.status-under { color: var(--bad); font-weight: 600; }
+.status-over { color: var(--warn); font-weight: 600; }
+
+
+
+
+.empty-note { color: var(--text-dim); font-style: italic; }
+
+.info-note {
+  color: var(--text-dim);
+  font-size: 0.83rem;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  background: var(--row-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 6px;
+}
+
+.goal-warning {
+  background: #3a1414;
+  border: 1px solid #7a2c2c;
+  color: #f8b4b4;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  font-size: 0.85rem;
+}
+.goal-warning ul { margin: 6px 0 0; padding-left: 20px; }
+.goal-warning li { margin: 2px 0; }
+
+.assignment-table td.empty-slot { color: var(--text-dim); font-style: italic; }

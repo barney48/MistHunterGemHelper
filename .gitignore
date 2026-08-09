@@ -1,0 +1,12 @@
+# OS / editor noise
+Thumbs.db
+desktop.ini
+.DS_Store
+*.swp
+
+# Local tooling config
+.claude/
+
+# Packaged uploads -- rebuild from source instead of committing
+*.zip
+*.7z

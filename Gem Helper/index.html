@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mist Hunter Gem Helper</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="app-header">
+  <div class="lang-toggle">
+    <button type="button" class="lang-btn" data-lang="en">EN</button>
+    <button type="button" class="lang-btn" data-lang="pl">PL</button>
+  </div>
+  <h1>Mist Hunter Gem Helper</h1>
+  <p class="subtitle" data-i18n="subtitle">
+    Set up your gem slots and affix targets, and the solver will pick the best gem for each slot.
+  </p>
+  <p class="disclaimer" data-i18n-html="disclaimerHtml">
+    Gem data is community-sourced, gathered shortly after the game's 2026-07-29 launch and
+    corrected against in-game screenshots. It may still drift from live patches.
+  </p>
+</header>
+
+<main class="layout">
+  <section class="panel" id="slots-panel">
+    <h2 data-i18n="slotsTitle">Your Gem Slots</h2>
+    <div class="view-toggle" id="slots-view-toggle">
+      <button type="button" class="toggle-btn" data-mode="gear" data-i18n="toggleGear">Full Gear (by piece)</button>
+      <button type="button" class="toggle-btn" data-mode="flat" data-i18n="toggleFlat">Top-Up (flat list)</button>
+    </div>
+    <p class="hint" id="slots-hint"></p>
+    <div id="slots-bulk"></div>
+    <div id="slots-list" class="rows"></div>
+    <div id="slots-footer"></div>
+  </section>
+
+  <section class="panel" id="goals-panel">
+    <h2 data-i18n="goalsTitle">Affix Goals</h2>
+    <p class="hint" data-i18n="goalsHint">Affix level = number of socketed gems granting that affix. Set the level you want to reach; leftover slots are left empty.</p>
+    <div id="goals-budget"></div>
+    <div id="goals-list" class="rows"></div>
+    <button id="add-goal" class="btn" data-i18n="addGoal">+ Add Goal</button>
+  </section>
+
+  <section class="panel" id="results-panel">
+    <h2 data-i18n="resultsTitle">Recommended Setup</h2>
+    <div id="solve-status" class="hint"></div>
+    <div id="results-content"></div>
+  </section>
+</main>
+
+<script src="data.js"></script>
+<script src="i18n.js"></script>
+<script src="solver.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
