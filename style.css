@@ -125,10 +125,12 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
   padding: 4px 2px;
+  flex-wrap: wrap;
 }
 .slot-group-title { font-weight: 600; font-size: 0.9rem; }
-.slot-group-btns { display: flex; gap: 6px; align-items: center; }
+.slot-group-btns { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .rarity-select { font-size: 0.78rem; padding: 3px 6px; cursor: pointer; }
 
 /* Two-way switch on the one slot a rarity layout leaves open. */

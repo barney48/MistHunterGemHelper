@@ -227,8 +227,6 @@ function buildSlotRow(slot, socketIndex) {
   label.textContent = t("socketLabel", { n: socketIndex });
   row.appendChild(label);
 
-  if (slot.swap) row.appendChild(buildSwapToggle(slot.group, "socket"));
-
   DEFAULT_GEM_TYPES.forEach(type => {
     const isActive = slot.allowedTypes.includes(type);
     const chip = document.createElement("button");
@@ -311,8 +309,6 @@ function buildFixedAffixRow(fixed) {
   label.textContent = t("fixedLabel");
   label.dataset.tooltip = t("fixedTip");
   row.appendChild(label);
-
-  if (fixed.swap) row.appendChild(buildSwapToggle(fixed.group, "fixed"));
 
   const select = document.createElement("select");
   allAffixes().forEach(a => {
@@ -561,6 +557,16 @@ function renderSlotsGrouped(list) {
       scheduleSolve();
     });
     headerBtns.appendChild(raritySel);
+
+    // The socket/built-in choice belongs to the piece, not to whichever row
+    // happens to hold the swappable slot, so it lives up here beside the
+    // rarity that created it.
+    const swapSlot = groupSlots.find(s => s.swap);
+    const swapFixed = groupFixed.find(f => f.swap);
+    if (swapSlot || swapFixed) {
+      headerBtns.appendChild(buildSwapToggle(group, swapSlot ? "socket" : "fixed"));
+    }
+
     if (!NO_FIXED_AFFIX_GROUPS.includes(group)) {
       const fixedBtn = document.createElement("button");
       fixedBtn.type = "button";
