@@ -256,6 +256,29 @@ body {
 .budget-note.over { color: #fde68a; background: #2a2410; border-color: #4a3f1a; }
 .budget-note.over strong { color: #fde68a; }
 
+/* What the gear already grants before any gem is socketed. */
+.gear-grants-note {
+  margin: 0 0 10px;
+  font-size: 0.83rem;
+  color: var(--text-dim);
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px dashed var(--accent-dim);
+  border-radius: 6px;
+  cursor: help;
+}
+.gear-grants-note strong { color: var(--accent); }
+
+.goal-from-gear {
+  font-size: 0.72rem;
+  color: var(--accent);
+  border: 1px dashed var(--accent-dim);
+  border-radius: 999px;
+  padding: 1px 7px;
+  white-space: nowrap;
+  cursor: help;
+}
+
 /* Which socket colours can supply the chosen affix. */
 .goal-sources { display: inline-flex; align-items: center; gap: 3px; cursor: help; color: var(--text-dim); }
 .goal-sources .gem-icon { width: 15px; height: 15px; }

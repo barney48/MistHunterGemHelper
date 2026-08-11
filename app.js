@@ -680,9 +680,21 @@ function renderGoalBudget() {
   const { capacity, used, left } = affixBudget();
   if (capacity === 0 && used === 0) { el.innerHTML = ""; return; }
   const over = left < 0;
-  el.innerHTML = `<p class="budget-note${over ? " over" : ""}" data-tooltip="${escapeHtml(t("budgetTip"))}">` +
+  let html = `<p class="budget-note${over ? " over" : ""}" data-tooltip="${escapeHtml(t("budgetTip"))}">` +
     escapeHtml(t("budgetUsed", { used, capacity })) + " " +
     `<strong>${escapeHtml(over ? t("budgetOver", { n: -left }) : t("budgetLeft", { n: left }))}</strong></p>`;
+
+  // Levels the gear already grants for free. Without this the only clue they
+  // exist is a note under the results, so a built-in affix you have no goal
+  // for looks like it does nothing at all.
+  const baseline = fixedAffixBaseline();
+  const owned = Object.keys(baseline).sort();
+  if (owned.length > 0) {
+    const parts = owned.map(a => `<strong>${escapeHtml(a)} ${baseline[a]}</strong>`);
+    html += `<p class="gear-grants-note" data-tooltip="${escapeHtml(t("gearGrantsTip"))}">` +
+      escapeHtml(t("gearGrants")) + " " + parts.join(", ") + "</p>";
+  }
+  el.innerHTML = html;
 }
 
 function renderGoals() {
@@ -748,6 +760,17 @@ function renderGoals() {
     });
     if (!sources.length) srcWrap.textContent = "—";
     row.appendChild(srcWrap);
+
+    // Levels this affix already gets from a built-in, so it's clear why the
+    // target needs fewer gems than its number suggests.
+    const fromGear = fixedAffixBaseline()[goal.affix] || 0;
+    if (fromGear > 0) {
+      const gearChip = document.createElement("span");
+      gearChip.className = "goal-from-gear";
+      gearChip.textContent = t("fromGear", { n: fromGear });
+      gearChip.dataset.tooltip = t("fromGearTip", { n: fromGear });
+      row.appendChild(gearChip);
+    }
 
     const cap = AFFIX_MAX_LEVEL[goal.affix];
     if (cap != null) {
