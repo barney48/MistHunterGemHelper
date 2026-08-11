@@ -189,6 +189,10 @@ body {
   flex: 0 0 auto;
   margin-left: auto;
 }
+/* A socket row is as tall as its gem chips; a built-in row's tallest item is a
+   shorter <select>. Pin the content height to the chip size so swapping
+   between the two doesn't make the row jump. */
+.slot-row .row-main { min-height: 32px; }
 .slot-label, .goal-label { color: var(--text-dim); font-size: 0.85rem; min-width: 52px; }
 .goal-cap-hint { color: var(--text-dim); font-size: 0.78rem; font-style: italic; }
 .slot-label:not(:first-child) { min-width: auto; margin-left: 4px; }
