@@ -319,8 +319,9 @@ function buildFixedAffixRow(fixed) {
     select.appendChild(opt);
   });
   select.addEventListener("change", () => {
-    fixed.affix = select.value;
+    withFixedAffixChange(() => { fixed.affix = select.value; });
     saveState();
+    renderGoals();
     scheduleSolve();
   });
   row.appendChild(select);
@@ -330,10 +331,13 @@ function buildFixedAffixRow(fixed) {
   removeBtn.textContent = "✕";
   removeBtn.title = t("removeFixed");
   removeBtn.addEventListener("click", () => {
-    const pos = state.gearFixed.findIndex(f => f.id === fixed.id);
-    if (pos !== -1) state.gearFixed.splice(pos, 1);
+    withFixedAffixChange(() => {
+      const pos = state.gearFixed.findIndex(f => f.id === fixed.id);
+      if (pos !== -1) state.gearFixed.splice(pos, 1);
+    });
     saveState();
     renderSlots();
+    renderGoals();
     scheduleSolve();
   });
   row.appendChild(removeBtn);
@@ -342,9 +346,12 @@ function buildFixedAffixRow(fixed) {
 }
 
 function addFixedAffix(group) {
-  state.gearFixed.push({ id: generateId(), group, affix: allAffixes()[0] });
+  withFixedAffixChange(() => {
+    state.gearFixed.push({ id: generateId(), group, affix: allAffixes()[0] });
+  });
   saveState();
   renderSlots();
+  renderGoals();
   scheduleSolve();
 }
 
@@ -378,15 +385,18 @@ function applyRarityLayout(group, rarity) {
 
 // Flip the swappable slot between "gem socket" and "built-in affix".
 function setSwapMode(group, mode) {
-  if (mode === "fixed") {
-    state.gearSlots = state.gearSlots.filter(s => !(s.group === group && s.swap));
-    state.gearFixed.push({ id: generateId(), group, affix: allAffixes()[0], swap: true });
-  } else {
-    state.gearFixed = state.gearFixed.filter(f => !(f.group === group && f.swap));
-    state.gearSlots.push({ id: generateId(), group, allowedTypes: [], allowedLevels: [1], swap: true });
-  }
+  withFixedAffixChange(() => {
+    if (mode === "fixed") {
+      state.gearSlots = state.gearSlots.filter(s => !(s.group === group && s.swap));
+      state.gearFixed.push({ id: generateId(), group, affix: allAffixes()[0], swap: true });
+    } else {
+      state.gearFixed = state.gearFixed.filter(f => !(f.group === group && f.swap));
+      state.gearSlots.push({ id: generateId(), group, allowedTypes: [], allowedLevels: [1], swap: true });
+    }
+  });
   saveState();
   renderSlots();
+  renderGoals();
   scheduleSolve();
 }
 
@@ -480,12 +490,15 @@ function renderBulkRarity() {
       sel.value = common;
       return;
     }
-    groups.forEach(g => {
-      state.gearRarity[g] = chosen;
-      applyRarityLayout(g, chosen);
+    withFixedAffixChange(() => {
+      groups.forEach(g => {
+        state.gearRarity[g] = chosen;
+        applyRarityLayout(g, chosen);
+      });
     });
     saveState();
     renderSlots();
+    renderGoals();
     scheduleSolve();
   });
   wrap.appendChild(sel);
@@ -497,12 +510,15 @@ function renderBulkRarity() {
   clearBtn.dataset.tooltip = t("clearAllTip");
   clearBtn.addEventListener("click", () => {
     if (groups.every(g => groupIsEmpty(g)) || !confirm(t("clearAllConfirm"))) return;
-    groups.forEach(g => {
-      delete state.gearRarity[g];
-      applyRarityLayout(g, null);
+    withFixedAffixChange(() => {
+      groups.forEach(g => {
+        delete state.gearRarity[g];
+        applyRarityLayout(g, null);
+      });
     });
     saveState();
     renderSlots();
+    renderGoals();
     scheduleSolve();
   });
   wrap.appendChild(clearBtn);
@@ -551,9 +567,10 @@ function renderSlotsGrouped(list) {
         return;
       }
       if (chosen) state.gearRarity[group] = chosen; else delete state.gearRarity[group];
-      applyRarityLayout(group, chosen);
+      withFixedAffixChange(() => applyRarityLayout(group, chosen));
       saveState();
       renderSlots();
+      renderGoals();
       scheduleSolve();
     });
     headerBtns.appendChild(raritySel);
@@ -680,21 +697,60 @@ function renderGoalBudget() {
   const { capacity, used, left } = affixBudget();
   if (capacity === 0 && used === 0) { el.innerHTML = ""; return; }
   const over = left < 0;
-  let html = `<p class="budget-note${over ? " over" : ""}" data-tooltip="${escapeHtml(t("budgetTip"))}">` +
+  el.innerHTML = `<p class="budget-note${over ? " over" : ""}" data-tooltip="${escapeHtml(t("budgetTip"))}">` +
     escapeHtml(t("budgetUsed", { used, capacity })) + " " +
     `<strong>${escapeHtml(over ? t("budgetOver", { n: -left }) : t("budgetLeft", { n: left }))}</strong></p>`;
+}
 
-  // Levels the gear already grants for free. Without this the only clue they
-  // exist is a note under the results, so a built-in affix you have no goal
-  // for looks like it does nothing at all.
+// Keep the goal list in step with the affixes built into the gear. A built-in
+// grants its levels whether or not you asked for them, so it surfaces as a real
+// goal row rather than a note somewhere else.
+//   - a built-in with no goal gets one, starting at the level the gear grants
+//   - a target can never sit below that level
+//   - when a built-in goes away, its goal is dropped only if it was purely the
+//     gear's -- a target you had raised beyond it stays as an ordinary goal
+// Pass the baseline from *before* the change so removals can be spotted.
+function syncBuiltInGoals(prevBaseline) {
   const baseline = fixedAffixBaseline();
-  const owned = Object.keys(baseline).sort();
-  if (owned.length > 0) {
-    const parts = owned.map(a => `<strong>${escapeHtml(a)} ${baseline[a]}</strong>`);
-    html += `<p class="gear-grants-note" data-tooltip="${escapeHtml(t("gearGrantsTip"))}">` +
-      escapeHtml(t("gearGrants")) + " " + parts.join(", ") + "</p>";
+  prevBaseline = prevBaseline || {};
+
+  state.goals = state.goals.filter(g => {
+    const had = prevBaseline[g.affix] || 0;
+    const now = baseline[g.affix] || 0;
+    return !(had > 0 && now === 0 && g.target === had); // nothing of it was yours
+  });
+
+  Object.keys(baseline).forEach(affix => {
+    if (!state.goals.some(g => g.affix === affix)) {
+      state.goals.push({ id: generateId(), affix, target: baseline[affix] });
+    }
+  });
+
+  state.goals.forEach(g => {
+    const min = baseline[g.affix] || 0;
+    if (g.target != null && g.target < min) g.target = min;
+  });
+}
+
+// Run a change to the built-in affixes and reconcile the goals around it.
+function withFixedAffixChange(mutate) {
+  const before = fixedAffixBaseline();
+  mutate();
+  syncBuiltInGoals(before);
+}
+
+// One pip per level of a goal's target; the first `fromGear` are the levels the
+// gear supplies. Refilled in place as the target changes.
+function fillGoalPips(container, goal, fromGear) {
+  container.innerHTML = "";
+  const shown = Math.min(goal.target || 0, 12); // a silly target shouldn't spray pips
+  if (shown === 0) { container.removeAttribute("data-tooltip"); return; }
+  container.dataset.tooltip = fromGear > 0 ? t("pipsGearTip", { n: fromGear }) : t("pipsTip");
+  for (let i = 0; i < shown; i++) {
+    const pip = document.createElement("i");
+    pip.className = "pip" + (i < fromGear ? " pip-gear" : "");
+    container.appendChild(pip);
   }
-  el.innerHTML = html;
 }
 
 function renderGoals() {
@@ -761,16 +817,15 @@ function renderGoals() {
     if (!sources.length) srcWrap.textContent = "—";
     row.appendChild(srcWrap);
 
-    // Levels this affix already gets from a built-in, so it's clear why the
-    // target needs fewer gems than its number suggests.
+    // One pip per level of the target. The leading ones are shown in the gear
+    // colour when they come from a built-in -- they say where the level comes
+    // from, and they're the floor the target can't drop below. Always present
+    // (empty collapses via CSS) so the steppers can just refill it.
     const fromGear = fixedAffixBaseline()[goal.affix] || 0;
-    if (fromGear > 0) {
-      const gearChip = document.createElement("span");
-      gearChip.className = "goal-from-gear";
-      gearChip.textContent = t("fromGear", { n: fromGear });
-      gearChip.dataset.tooltip = t("fromGearTip", { n: fromGear });
-      row.appendChild(gearChip);
-    }
+    const pips = document.createElement("span");
+    pips.className = "goal-pips";
+    row.appendChild(pips);
+    fillGoalPips(pips, goal, fromGear);
 
     const cap = AFFIX_MAX_LEVEL[goal.affix];
     if (cap != null) {
@@ -791,25 +846,34 @@ function renderGoals() {
     targetInput.type = "number";
     targetInput.min = "0";
     if (cap != null) targetInput.max = String(cap);
+    targetInput.min = String(fromGear); // gear grants these whatever you ask for
     targetInput.value = goal.target != null ? goal.target : "";
     targetInput.addEventListener("input", () => {
-      goal.target = targetInput.value === "" ? null : Math.max(0, parseInt(targetInput.value, 10) || 0);
+      const typed = targetInput.value === "" ? null : Math.max(0, parseInt(targetInput.value, 10) || 0);
+      goal.target = typed == null ? null : Math.max(typed, fromGear);
       saveState();
       renderGoalBudget(); // cheap, so show it straight away rather than after the solve debounce
+      fillGoalPips(pips, goal, fromGear);
       scheduleSolve();
     });
+    // Snap a below-floor entry back once the field loses focus, so mid-typing
+    // isn't fought with but the box can't be left showing an impossible number.
+    targetInput.addEventListener("blur", () => {
+      if (goal.target != null && Number(targetInput.value) < goal.target) targetInput.value = goal.target;
+    });
 
-    // Stepper stays inside 0..cap; typing is left unclamped so the
+    // Stepper stays inside fromGear..cap; typing is left unclamped upward so the
     // "this affix caps at N" warning can still surface a too-high target.
     const step = (delta) => {
       const current = goal.target != null ? goal.target : 0;
       let next = current + delta;
-      next = Math.max(0, next);
+      next = Math.max(fromGear, next);
       if (cap != null) next = Math.min(next, cap);
       goal.target = next;
       targetInput.value = next;
       saveState();
       renderGoalBudget();
+      fillGoalPips(pips, goal, fromGear);
       scheduleSolve();
     };
 
