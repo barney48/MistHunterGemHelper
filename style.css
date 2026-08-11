@@ -366,7 +366,8 @@ input[type="number"] { width: 64px; }
   font-size: 1rem;
   padding: 2px 6px;
 }
-.remove-btn:hover { color: var(--bad); }
+.remove-btn:hover:not(:disabled) { color: var(--bad); }
+.remove-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
 .btn {
   background: var(--accent-dim);

@@ -904,13 +904,21 @@ function renderGoals() {
     const removeBtn = document.createElement("button");
     removeBtn.className = "remove-btn";
     removeBtn.textContent = "✕";
-    removeBtn.title = t("removeGoal");
-    removeBtn.addEventListener("click", () => {
-      state.goals.splice(index, 1);
-      saveState();
-      renderGoals();
-      scheduleSolve();
-    });
+    if (fromGear > 0) {
+      // The gear grants these levels regardless, so the goal can't be removed
+      // any more than its target can be lowered past the pips. Clear it by
+      // taking the built-in off the gear piece instead.
+      removeBtn.disabled = true;
+      removeBtn.title = t("removeGoalLocked");
+    } else {
+      removeBtn.title = t("removeGoal");
+      removeBtn.addEventListener("click", () => {
+        state.goals.splice(index, 1);
+        saveState();
+        renderGoals();
+        scheduleSolve();
+      });
+    }
     row.appendChild(removeBtn);
 
     list.appendChild(pinRowEnd(row, badge, removeBtn));
