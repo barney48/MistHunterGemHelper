@@ -206,6 +206,53 @@ loadouts they encode aren't known.
 
 ---
 
+## 5a. Third-party decoder (GameDB) — what it does and doesn't recover
+
+`https://mistfallhunter.gamedb.wiki/builds/#make` has a working import/export
+for these codes. Tested against our own samples on 2026-08-09.
+
+**Its codec is server-side** (the page bundle only `fetch`es an API), so there
+is no table to read out of its JavaScript, and using it would mean depending on
+someone else's service at runtime.
+
+What it recovered from `17lpV0V7siZSH0c6LTx5cw9MarSD9Fn5B2fHP7Ng`:
+
+| Field | Result |
+|---|---|
+| Item identity per slot | correct — Crusade Helmet, Exile Greatsword, etc. |
+| Rarity | correct — Excellent, and Damaged for the grey off-hand |
+| **Socket layout per slot** | correct — colours and tiers, incl. `Universal I + Agate I` |
+| **Gems in sockets** | **not imported** — both weapon gem slots left empty |
+| **Existing (fixed) affixes** | **wrong** — see below |
+
+The gem failure is certain, not a display quirk: that code demonstrably contains
+Wrath Moonstone (ID 169, bits 208–215 — decoded independently here), and no gem
+name appears anywhere in the rendered page.
+
+The affixes it shows look like generic per-item template values, not values read
+from the code. It reported `STOIC 1` on the Exile Greatsword where the actual
+loadout had no affix on that weapon at all, and Aegis/Tenacious across the
+armour where the real rolls were Wrath ×3 and Stoic ×2.
+
+**Do not treat its affix output as ground truth.** Its item and socket-layout
+decoding, on the other hand, matched our screenshots exactly and independently
+confirmed that white = universal socket.
+
+Net position: they solved the item layer, we solved the gem layer, and *fixed
+affixes remain unsolved by both*.
+
+### Key consequence for our importer
+
+Their UI exposes **socket layout as a field separate from the equipment item**,
+and it populated correctly on import. Combined with the fact that two items of
+the same name and rarity can roll different socket colours, this means the
+**socket layout must be encoded in the share code itself** — it cannot be
+derived from an item ID alone.
+
+That is the single most useful thing to come out of this comparison: the fields
+this tool actually needs (socket layout, gems, existing affixes) are all present
+in the code, so **item IDs are not a prerequisite for the importer we want**.
+
 ## 6. Suggested next steps
 
 Roughly in order of value per code collected:
@@ -219,8 +266,17 @@ Roughly in order of value per code collected:
    of a block behaves as predicted.
 4. **Socket field positions** for the remaining slots — one gem into each slot
    in turn, diffing against a fixed baseline.
-5. **Item IDs** — the big one. Swap a single gear piece at a time from a fixed
-   baseline and diff. Note this changes payload length in some cases, so compare
-   only same-length codes.
+5. **Socket layout fields** — now the highest-value unknown, and the one that
+   unblocks a useful importer. Because layout is a per-item-instance roll, it
+   must be in the code. Find it by exporting a baseline, then swapping one piece
+   for another of the **same rarity but a different socket layout**, and diffing.
+   Compare only same-length codes.
+6. **Existing (fixed) affixes** — unsolved by us and by GameDB. Isolate by
+   swapping one piece for another of the same rarity and *same socket layout*
+   but a different rolled affix, so only that field moves.
+7. **Item IDs** — deliberately deprioritised. Nice for showing item names, but
+   *not* required for this tool, which only needs sockets, gems and affixes.
 
-A **gem-and-socket importer is achievable now**; full gear import needs step 5.
+**Verdict:** a socket + gem importer is achievable without ever solving item
+IDs. Steps 5 and 6 are what stand between here and a working paste-a-code
+feature; both are ordinary diffing work, not new cryptanalysis.
